@@ -1,24 +1,14 @@
 from django.shortcuts import get_object_or_404
-from posts.models import Group, Post
 from rest_framework import viewsets
-from rest_framework.permissions import (
-    SAFE_METHODS, BasePermission, IsAuthenticated
-)
+from rest_framework.permissions import IsAuthenticated
 
-from .serializer import CommentSerializer, GroupSerializer, PostSerializer
-
-
-class AuthorPermission(BasePermission):
-    message = "Действие доступно только автору"
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return obj.author == request.user
+from .permissions import IsAuthorOrReadOnly
+from .serializers import CommentSerializer, GroupSerializer, PostSerializer
+from posts.models import Group, Post
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    permission_classes = [AuthorPermission, IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAuthorOrReadOnly]
     queryset = Post.objects.all()
     serializer_class = PostSerializer
 
@@ -32,7 +22,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    permission_classes = [AuthorPermission, IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAuthorOrReadOnly]
     serializer_class = CommentSerializer
 
     def get_queryset(self):
